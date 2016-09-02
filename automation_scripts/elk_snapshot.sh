@@ -17,6 +17,20 @@ open_index_count=
 day=1
 repo_status=$(curl -s -o /dev/null -I -w "%{http_code}" -XGET $Host/_snapshot/$elk_repo/_all)
 
+close_index () {
+  local index_count=$1
+
+  close_date=$(date --date="$index_count days ago" +%Y.%m.%d)
+  close_status=$(curl -s -o /dev/null -I -w "%{http_code}" -XPOST $Host/logstash-$close_date/_close)
+  if [ $close_status != 200 ]
+  then
+    echo "Failed to close index."
+    exit 1
+  fi
+
+  echo "Closed the old index successfully."
+}
+
 # create repo if not exists
 if [ $repo_status != 200 ]; then
   echo "  Creating the repo"
@@ -46,6 +60,7 @@ index_date=$(date --date="$day days ago" +%Y.%m.%d)
 snapshot_status=$(curl -s -o /dev/null -I -w "%{http_code}" -XGET $Host/_snapshot/$elk_repo/snapshot_$index_date)
 if [ $snapshot_status = 200 ]; then
   echo "  The snapshot for the index logstash-$index_date already exists"
+  close_index $open_index_count
   exit 0
 fi
 
@@ -93,3 +108,4 @@ then
 fi
 
 echo "Closed the old index successfully."
+close_index $open_index_count
