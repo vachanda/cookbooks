@@ -20,7 +20,7 @@ repo_status=$(curl -s -o /dev/null -I -w "%{http_code}" -XGET $Host/_snapshot/$e
 if [ $repo_status != 200 ]; then
   echo "  Creating the repo"
   {
-    curl -XPUT "'$Host'/_snapshot/$elk_repo" -d '{
+    curl -XPUT "$Host/_snapshot/$elk_repo" -d '{
       "type": "s3",
       "settings": {
       "bucket": "'$s3_bucket'",
